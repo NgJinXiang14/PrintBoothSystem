@@ -5,10 +5,9 @@ import RPi.GPIO as GPIO
 import math
 import sys
 import qpageview
-from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QPushButton, QWidget, QTreeView, QFileSystemModel, QVBoxLayout, QSpinBox, QCheckBox
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QPushButton, QWidget, QTreeView, QFileSystemModel, QVBoxLayout, QSpinBox, QCheckBox, QMessageBox
 from PyQt5.QtCore import Qt, QSize, QModelIndex, QDir, QSortFilterProxyModel, QRegExp, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QMovie, QPainter, QPixmap, QIcon, QFont
-from PyQt5.QtPrintSupport import QPrinter
 
 GPIO.setmode(GPIO.BCM)
 counterPin=26
@@ -17,7 +16,10 @@ file = ""
 pagecount = 0
 total = 0.00
 coin = 0.0
-option = "" 
+option = ""
+copies = "1"
+colormode = ""
+page= ""
 vendoState = True
 
 class Coin(QThread) :
@@ -57,12 +59,13 @@ class MainWindow(QMainWindow):
         total=0.0
         option=""
         
+
         self.setWindowTitle("Printing Booth Systems")
-        self.movie = QMovie("korone.gif")
+        self.movie = QMovie("menu.gif")
         self.movie.frameChanged.connect(self.repaint)
         self.movie.start()
         self.btn = QPushButton('Touch here to Begin',self)
-        self.btn.setGeometry(200, 300, 400, 100)
+        self.btn.setGeometry(200, 230, 400, 100)
         self.btn.setFont(QFont('Arial',30))
         self.btn.clicked.connect(self.slot_btn_function)
         
@@ -86,10 +89,13 @@ class FileSelect(QMainWindow,QWidget):
     def __init__(self):
         super(FileSelect, self).__init__()
         self.setWindowTitle("Printing Booth Systems")
-        global file,pagecount,total,enabler
+        global file,pagecount,total,enabler,copies,colormode,page
         file = ""
         pagecount = 0
         total =0.0
+        copies = "1"
+        colormode = ""
+        page= ""
         
         widget = QWidget()
         layout = QVBoxLayout()
@@ -157,7 +163,7 @@ class Preview(QMainWindow):
         global pagecount,total,enabler
         
         total =0.0
-        
+      
         
         widget = QWidget()
         layout = QVBoxLayout()
@@ -199,17 +205,15 @@ class Preview(QMainWindow):
         self.hide()
         
 class Option(QMainWindow):
-    my_signal = pyqtSignal()
     def __init__(self):
         super(Option, self).__init__()
         self.setWindowTitle("Printing Booth Systems")
-        
+       
+
         global total,option
         self.mode = 0
         self.coin_en = Coin()
-        self.printer=QPrinter()
-        self.painter = QPainter()
-        
+    
         
         self.L1 = QLabel(self)
         self.L2 = QLabel(self)
@@ -217,10 +221,6 @@ class Option(QMainWindow):
         self.L4 = QLabel(self)
         self.L5 = QLabel(self)
         self.L6 = QLabel(self)
-        self.printer=QPrinter()
-        self.conn = cups.Connection()
-        self.printers = self.conn.getPrinters()
-        self.h = qpageview.cupsprinter.handle(self.printer) #Printer NAme
         
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh_coincheck)
@@ -296,7 +296,6 @@ QSpinBox::down-button  {
         
         self.spin.setMinimum(1)
         self.spin.setMaximum(pagecount)
-        #self.spin.setButtonSymbols(2) #to disable spinbox arrow
 
         self.btn1 = QPushButton('Print', self)
         self.btn1.setGeometry(620, 150, 150, 170)
@@ -312,27 +311,23 @@ QSpinBox::down-button  {
         self.btn6 = QPushButton('Black White', self)
         self.btn6.setGeometry(300, 310, 150, 90)
         self.btn6.clicked.connect(self.slot_bw_function)
+
         
         
     
     def slot_btn1_function(self):
-        for self.printer in self.printers:
-            print (self.printer, self.printers[self.printer]["device-uri"])
-            printer_name="E510-series" #Printer name in CUPS
-            fileName = file
-            self.conn.printFile(printer_name, fileName, " ", {'page-range' : '{722}-{722}'})
-        
-        #if self.h :
-            #self.h._doPrintFiles("E510-series",file, "None", {'copies' : '3',
-             #                                                 'print-color-mode' : 'monochrome',
-              #                                                })
-            
-        #if not self.h.printFile(file):
-            #QMessageBox.warning(None, "Printing failure",
-            #"There was an error:\n{0} (status: {1})".format(h.error, h.status))
-        
-        
-        
+        global coin
+        self.h = qpageview.cupsprinter.handle()
+        page = str(self.spin.value())+"-"+str(pagecount)
+        print(copies)
+        print(colormode)
+        print(page)
+        if self.h:
+            self.h.printFile(file ,'None', {'copies' : copies ,'print-color-mode' : colormode,'page-ranges' : page})
+        coin = 0.0
+        self.fs = MainWindow()
+        self.fs.showFullScreen()
+        self.hide()
     def slot_btn2_function(self):
         self.fs = FileSelect()
         self.fs.showFullScreen()
@@ -341,7 +336,8 @@ QSpinBox::down-button  {
     def slot_colour_function(self):
         self.check1.setChecked(True)
         self.check2.setChecked(False)
-        global pagecount, total
+        global pagecount, total,colormode
+        colormode = ""
         spinvalue = self.spin.value() - 1
         total = ((pagecount - spinvalue )*0.25)
         self.L4.setText("RM" + "{:.1f}".format(round_decimals_up(total))+"0")
@@ -349,7 +345,8 @@ QSpinBox::down-button  {
     def slot_bw_function(self):
         self.check2.setChecked(True)
         self.check1.setChecked(False)
-        global pagecount, total
+        global pagecount, total,colormode
+        colormode="monochrome"
         spinvalue = self.spin.value() - 1
         total = ((pagecount - spinvalue)*0.12)
         self.L4.setText("RM" + "{:.1f}".format(round_decimals_up(total))+"0")
