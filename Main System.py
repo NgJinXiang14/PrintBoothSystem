@@ -36,8 +36,6 @@ class Coin(QThread) :
                 enabler = True
                 self.coinenter.emit(coin)
                
-
-
 def round_decimals_up(number:float, decimals:int=1):
     if not isinstance(decimals, int):
         raise TypeError()
@@ -78,8 +76,7 @@ class MainWindow(QMainWindow):
             painter.drawPixmap(frameRect.left(), frameRect.top(), currentFrame)
         
     def slot_btn_function(self):
-        self.fs = FileSelect()#Select Dir
-        
+        self.fs = FileSelect() 
         self.fs.showFullScreen()
         self.movie.stop()
         self.hide()
@@ -105,15 +102,9 @@ class FileSelect(QMainWindow,QWidget):
         self.model.setRootPath(QDir.currentPath()) #ignore
         self.model.setNameFilters(["*.pdf"])
         
-        #self.proxy = QSortFilterProxyModel()
-        idx = self.model.index("/home/pi/FYP Source Code") #set dir
-        #self.proxy.setSourceModel(self.model)
-        
-        #self.proxy.setFilterRegExp(QRegExp("", Qt.CaseInsensitive, QRegExp.FixedString))
-        #self.proxy.setFilterKeyColumn(-1)
-        #self.tree.setModel(self.proxy)
+        idx = self.model.index("/home/pi/FYP Source Code") #set directory
+      
         self.tree.setModel(self.model)
-        #self.tree.setRootIndex(self.proxy.mapFromSource(idx))
         self.tree.setRootIndex(idx)
         self.tree.setColumnWidth(0, 250)
         self.tree.setAlternatingRowColors(True)
@@ -163,8 +154,7 @@ class Preview(QMainWindow):
         global pagecount,total,enabler
         
         total =0.0
-      
-        
+     
         widget = QWidget()
         layout = QVBoxLayout()
         
@@ -209,12 +199,10 @@ class Option(QMainWindow):
         super(Option, self).__init__()
         self.setWindowTitle("Printing Booth Systems")
        
-
         global total,option
         self.mode = 0
         self.coin_en = Coin()
     
-        
         self.L1 = QLabel(self)
         self.L2 = QLabel(self)
         self.L3 = QLabel(self)
@@ -311,23 +299,23 @@ QSpinBox::down-button  {
         self.btn6 = QPushButton('Black White', self)
         self.btn6.setGeometry(300, 310, 150, 90)
         self.btn6.clicked.connect(self.slot_bw_function)
-
-        
-        
-    
+  
     def slot_btn1_function(self):
         global coin
+        
         self.h = qpageview.cupsprinter.handle()
         page = str(self.spin.value())+"-"+str(pagecount)
         print(copies)
         print(colormode)
         print(page)
+        
         if self.h:
             self.h.printFile(file ,'None', {'copies' : copies ,'print-color-mode' : colormode,'page-ranges' : page})
         coin = 0.0
         self.fs = MainWindow()
         self.fs.showFullScreen()
         self.hide()
+        
     def slot_btn2_function(self):
         self.fs = FileSelect()
         self.fs.showFullScreen()
@@ -337,6 +325,7 @@ QSpinBox::down-button  {
         self.check1.setChecked(True)
         self.check2.setChecked(False)
         global pagecount, total,colormode
+        
         colormode = ""
         spinvalue = self.spin.value() - 1
         total = ((pagecount - spinvalue )*0.25)
@@ -346,17 +335,18 @@ QSpinBox::down-button  {
         self.check2.setChecked(True)
         self.check1.setChecked(False)
         global pagecount, total,colormode
+        
         colormode="monochrome"
         spinvalue = self.spin.value() - 1
         total = ((pagecount - spinvalue)*0.12)
         self.L4.setText("RM" + "{:.1f}".format(round_decimals_up(total))+"0")
-        
-        
+          
     def refresh_coincheck(self):
         global pagecount, total
+        
         self.L5.setText("RM" + "{:.1f}".format(round_decimals_up(coin))+"0")
+        
         if self.check1.isChecked() == True:
-            
             spinvalue = self.spin.value() - 1
             total = ((pagecount - spinvalue )*0.25)
             self.L4.setText("RM" + "{:.1f}".format(round_decimals_up(total))+"0")
@@ -369,6 +359,7 @@ QSpinBox::down-button  {
             self.L4.setText("RM" + "{:.1f}".format(round_decimals_up(total))+"0")
         else :
             pass
+        
         if coin >= total :
             if coin != 0 and total != 0:
                 self.btn1.setEnabled(True)
@@ -380,18 +371,13 @@ QSpinBox::down-button  {
 worker = Coin()
 worker.start()
 
-
 def main():
     
     app = QApplication(sys.argv)
     QApplication.processEvents()
     w = MainWindow()
     w.showFullScreen()
-    
     sys.exit(app.exec_())
     
-    
- 
 if __name__ == '__main__':
     main()
-
