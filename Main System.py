@@ -113,7 +113,7 @@ class FileSelect(QMainWindow,QWidget):
         widget.setLayout(layout)
         self.setCentralWidget(widget)
         widget.setFixedWidth(600)
-        self.tree.setFont(QFont('Arial',25))
+        self.tree.setFont(QFont('Arial',30))
         self.tree.hideColumn(1)
         self.tree.hideColumn(2)
         self.tree.hideColumn(3)
